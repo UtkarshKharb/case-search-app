@@ -31,6 +31,7 @@ router.get('/cases/:cnr', async (req, res, next) => {
     }
 
     const matter = await Matter.findOne({ cnr }).lean();
+    console.log(`Found matter: ${matter ? matter.case_id : 'none'}`);
     if (!matter) {
       return res.status(404).json({ error: `No case found for CNR ${cnr}.` });
     }
