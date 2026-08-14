@@ -1,0 +1,18 @@
+{
+  "name": "case-search-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "FERA/FEMA case search — find and view a court case by CNR.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "db:populate": "node scripts/ingest.js populate",
+    "db:drain": "node scripts/ingest.js drain"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "exceljs": "^4.4.0",
+    "express": "^4.19.2",
+    "mongoose": "^8.5.1"
+  }
+}
