@@ -23,6 +23,7 @@ router.get('/cases', async (req, res, next) => {
 // GET /api/cases/:cnr — the core search workflow: look up a case by its CNR and
 // return everything needed to display it (matter + advocates + hearings).
 router.get('/cases/:cnr', async (req, res, next) => {
+  console.log(`GET /api/cases/${req.params.cnr}`);
   try {
     const cnr = req.params.cnr.trim().toUpperCase();
     if (!CNR_PATTERN.test(cnr)) {
