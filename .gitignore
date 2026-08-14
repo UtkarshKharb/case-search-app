@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+
+# Environment / secrets
+.env
+.env.local
+
+# Logs
+npm-debug.log*
+*.log
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Claude Code / AI-assistant artifacts — never part of the app
+.claude/
+CLAUDE.md
