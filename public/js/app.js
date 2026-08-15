@@ -9,7 +9,7 @@ const navCasesLink = document.getElementById('nav-cases-link');
 const themeToggle = document.getElementById('theme-toggle');
 
 document.title = APP_NAME;
-navWordmark.textContent = APP_NAME;
+document.getElementById('nav-wordmark-text').textContent = APP_NAME;
 
 // --- small display helpers ---------------------------------------------------
 
@@ -325,7 +325,6 @@ function updateNavActiveState(view) {
 }
 
 let isInitialRoute = true;
-
 async function router() {
   const route = parseRoute(window.location.hash);
   updateNavActiveState(route.view);
