@@ -235,21 +235,21 @@ function buildCaseDetailHtml({ matter, advocates, hearings, lowerCourts }) {
     </div>
 
     ${
-      lowerCourts.length > 0
-        ? `<details class="lower-court-section">
-             <summary class="hearings-toggle">Lower court history (${lowerCourts.length})</summary>
-             ${renderLowerCourts(lowerCourts)}
-           </details>`
-        : ''
-    }
-
-    ${
       hearings.length === 0
         ? `<div class="hearings-section"><h3>Hearings (0)</h3>${renderHearings(hearings)}</div>`
         : `<details class="hearings-section">
              <summary class="hearings-toggle">Hearings (${hearings.length})</summary>
              ${renderHearings(hearings)}
            </details>`
+    }
+
+    ${
+      lowerCourts.length > 0
+        ? `<details class="lower-court-section">
+             <summary class="hearings-toggle">Lower court history (${lowerCourts.length})</summary>
+             ${renderLowerCourts(lowerCourts)}
+           </details>`
+        : ''
     }
   `;
 }

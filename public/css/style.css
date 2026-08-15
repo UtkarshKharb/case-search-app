@@ -691,6 +691,10 @@ details[open] > .hearings-toggle::after {
 
 /* --- lower court history ------------------------------------------------------------ */
 
+.lower-court-section {
+  margin-top: 1.5rem;
+}
+
 .lower-court-list {
   list-style: none;
   margin: 0;
