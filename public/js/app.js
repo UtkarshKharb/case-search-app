@@ -154,7 +154,34 @@ function renderHearings(hearings) {
     .join('')}</ol>`;
 }
 
-function buildCaseDetailHtml({ matter, advocates, hearings }) {
+// One matter can have several lower_court entries that don't necessarily form a single
+// linear appellate chain (different forums, case numbers, dates) — sorted oldest first,
+// with undated entries (order_date can be null in the source) pushed to the end.
+function renderLowerCourts(lowerCourts) {
+  const sorted = [...lowerCourts].sort((a, b) => {
+    if (!a.order_date) return 1;
+    if (!b.order_date) return -1;
+    return new Date(a.order_date) - new Date(b.order_date);
+  });
+  return `<ul class="lower-court-list">${sorted
+    .map((lc) => {
+      const subParts = [lc.state, lc.case_identifier].filter(Boolean).map(escapeHtml);
+      return `
+        <li class="lower-court-item">
+          <div class="lower-court-main">
+            <span>${escapeHtml(lc.court)}</span>
+            ${lc.level ? `<span class="badge">${escapeHtml(lc.level)}</span>` : ''}
+          </div>
+          <div class="lower-court-sub">
+            <span>${subParts.length ? subParts.join(' · ') : '—'}</span>
+            <span>${formatDate(lc.order_date)}</span>
+          </div>
+        </li>`;
+    })
+    .join('')}</ul>`;
+}
+
+function buildCaseDetailHtml({ matter, advocates, hearings, lowerCourts }) {
   const petitionerAdvocates = advocates.filter((a) => a.side === 'petitioner');
   const respondentAdvocates = advocates.filter((a) => a.side === 'respondent');
   const hasStatusQuirk = matter.case_status === 'Disposed' && matter.disposal_type === 'Pending';
@@ -206,6 +233,15 @@ function buildCaseDetailHtml({ matter, advocates, hearings }) {
         ${renderAdvocateList(respondentAdvocates)}
       </div>
     </div>
+
+    ${
+      lowerCourts.length > 0
+        ? `<details class="lower-court-section">
+             <summary class="hearings-toggle">Lower court history (${lowerCourts.length})</summary>
+             ${renderLowerCourts(lowerCourts)}
+           </details>`
+        : ''
+    }
 
     ${
       hearings.length === 0

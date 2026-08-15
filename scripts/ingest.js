@@ -5,6 +5,7 @@ const { connectDB, disconnectDB } = require('../config/db');
 const Matter = require('../models/Matter');
 const Advocate = require('../models/Advocate');
 const Hearing = require('../models/Hearing');
+const LowerCourt = require('../models/LowerCourt');
 
 const SOURCE_FILE = path.join(__dirname, '..', 'SE_AsyncTask_FERA.xlsx');
 const SAMPLE_SIZE = 100;
@@ -46,6 +47,34 @@ function normalizeCellValue(value) {
     return null;
   }
   return value;
+}
+
+// lower_court.order_date is the one messy date field in the source: a mix of native
+// datetimes and strings in two shapes (DD-MM-YYYY / D-M-YYYY / DD.MM.YYYY, or
+// YYYY-MM-DD). Verified against the full sheet during planning: every string has exactly
+// one 4-digit segment (the year), always unambiguously first or last, so this never has
+// to guess. Anything that still doesn't parse logs a warning and becomes null.
+function parseLowerCourtOrderDate(value) {
+  if (value === null || value instanceof Date) return value;
+  if (typeof value !== 'string') {
+    console.warn(`Unrecognized lower_court order_date value, storing null: ${JSON.stringify(value)}`);
+    return null;
+  }
+
+  const parts = value.split(/[-.]/).map((s) => s.trim());
+  if (parts.length !== 3) {
+    console.warn(`Unrecognized lower_court order_date format, storing null: "${value}"`);
+    return null;
+  }
+
+  const [a, b, c] = parts;
+  const [year, month, day] = a.length === 4 ? [a, b, c] : [c, b, a];
+  const date = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
+  if (Number.isNaN(date.getTime())) {
+    console.warn(`Could not parse lower_court order_date, storing null: "${value}"`);
+    return null;
+  }
+  return date;
 }
 
 // --- stratified sampling -----------------------------------------------------
@@ -100,11 +129,12 @@ async function drain() {
     Matter.deleteMany({}),
     Advocate.deleteMany({}),
     Hearing.deleteMany({}),
+    LowerCourt.deleteMany({}),
   ]);
-  const [matters, advocates, hearings] = results;
+  const [matters, advocates, hearings, lowerCourts] = results;
   console.log(
     `Drained: ${matters.deletedCount} matters, ${advocates.deletedCount} advocates, ` +
-      `${hearings.deletedCount} hearings`
+      `${hearings.deletedCount} hearings, ${lowerCourts.deletedCount} lower_court entries`
   );
 }
 
@@ -120,20 +150,23 @@ async function populate() {
   const allMatters = await readSheet(workbook, 'matters');
   const allAdvocates = await readSheet(workbook, 'advocates');
   const allHearings = await readSheet(workbook, 'hearings');
+  const allLowerCourts = await readSheet(workbook, 'lower_court');
 
   const sampledMatters = stratifiedSample(allMatters);
   const sampledCaseIds = new Set(sampledMatters.map((m) => m.case_id));
 
   const sampledAdvocates = allAdvocates.filter((a) => sampledCaseIds.has(a.case_id));
   const sampledHearings = allHearings.filter((h) => sampledCaseIds.has(h.case_id));
+  const sampledLowerCourts = allLowerCourts.filter((lc) => sampledCaseIds.has(lc.case_id));
 
   await Matter.insertMany(sampledMatters.map(toMatterDoc));
   await Advocate.insertMany(sampledAdvocates.map(toAdvocateDoc));
   await Hearing.insertMany(sampledHearings.map(toHearingDoc));
+  await LowerCourt.insertMany(sampledLowerCourts.map(toLowerCourtDoc));
 
   console.log(
     `Inserted: ${sampledMatters.length} matters, ${sampledAdvocates.length} advocates, ` +
-      `${sampledHearings.length} hearings`
+      `${sampledHearings.length} hearings, ${sampledLowerCourts.length} lower_court entries`
   );
 }
 
@@ -179,6 +212,17 @@ function toHearingDoc(row) {
     res_arguing_counsel: row.res_arguing_counsel,
     summary: row.summary,
     order_text: row.order_text,
+  };
+}
+
+function toLowerCourtDoc(row) {
+  return {
+    case_id: row.case_id,
+    court: row.court,
+    state: row.state,
+    case_identifier: row.case_identifier,
+    order_date: parseLowerCourtOrderDate(row.order_date),
+    level: row.level,
   };
 }
 

@@ -2,6 +2,7 @@ const express = require('express');
 const Matter = require('../models/Matter');
 const Advocate = require('../models/Advocate');
 const Hearing = require('../models/Hearing');
+const LowerCourt = require('../models/LowerCourt');
 
 const router = express.Router();
 
@@ -36,12 +37,13 @@ router.get('/cases/:cnr', async (req, res, next) => {
       return res.status(404).json({ error: `No case found for CNR ${cnr}.` });
     }
 
-    const [advocates, hearings] = await Promise.all([
+    const [advocates, hearings, lowerCourts] = await Promise.all([
       Advocate.find({ case_id: matter.case_id }).lean(),
       Hearing.find({ case_id: matter.case_id }).sort({ date: 1 }).lean(),
+      LowerCourt.find({ case_id: matter.case_id }).lean(),
     ]);
 
-    res.json({ matter, advocates, hearings });
+    res.json({ matter, advocates, hearings, lowerCourts });
   } catch (err) {
     next(err);
   }

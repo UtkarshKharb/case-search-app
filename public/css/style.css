@@ -685,8 +685,42 @@ button:active {
   transition: transform 0.15s ease;
 }
 
-.hearings-section[open] > .hearings-toggle::after {
+details[open] > .hearings-toggle::after {
   transform: rotate(180deg);
+}
+
+/* --- lower court history ------------------------------------------------------------ */
+
+.lower-court-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.lower-court-item {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 0.6rem 0.85rem;
+}
+
+.lower-court-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+  font-weight: 600;
+}
+
+.lower-court-sub {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.85rem;
+  color: var(--color-muted);
 }
 
 .summary-label {
@@ -722,7 +756,8 @@ button:active {
   .parties-grid {
     grid-template-columns: 1fr;
   }
-  .case-card-sub {
+  .case-card-sub,
+  .lower-court-sub {
     flex-direction: column;
     gap: 0.15rem;
   }
