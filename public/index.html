@@ -3,40 +3,38 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FERA/FEMA Case Search</title>
+  <meta name="color-scheme" content="dark light" />
+  <title>Causa Analytica</title>
   <link rel="stylesheet" href="/css/style.css" />
+  <script>
+    // Set the theme before first paint to avoid a flash of the wrong theme.
+    // app.js re-applies the same logic later (and owns the toggle button),
+    // this is just the fast pre-load path.
+    (function () {
+      var stored = localStorage.getItem('causa-analytica-theme');
+      var theme =
+        stored === 'light' || stored === 'dark'
+          ? stored
+          : window.matchMedia('(prefers-color-scheme: light)').matches
+          ? 'light'
+          : 'dark';
+      document.documentElement.dataset.theme = theme;
+    })();
+  </script>
 </head>
 <body>
-  <header class="page-header">
-    <h1>FERA/FEMA Case Search</h1>
-    <p class="subtitle">Find a court case by its CNR (Case Number Record)</p>
-  </header>
+  <nav class="site-nav">
+    <a href="#/" class="nav-wordmark" id="nav-wordmark">Causa Analytica</a>
+    <div class="nav-links">
+      <a href="#/cases" class="nav-link" id="nav-cases-link">All Cases</a>
+      <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Toggle dark/light theme">
+        <span class="theme-icon theme-icon-dark" aria-hidden="true">&#9789;</span>
+        <span class="theme-icon theme-icon-light" aria-hidden="true">&#9728;</span>
+      </button>
+    </div>
+  </nav>
 
-  <main>
-    <section class="search-panel">
-      <form id="search-form" novalidate>
-        <input
-          id="cnr-input"
-          type="text"
-          placeholder="Enter 16-character CNR, e.g. HCBM010003411990"
-          maxlength="16"
-          autocomplete="off"
-        />
-        <button type="submit">Search</button>
-      </form>
-      <p id="search-error" class="error-message" hidden></p>
-    </section>
-
-    <section id="case-detail" class="case-detail" hidden></section>
-
-    <section class="browse-panel">
-      <h2>Browse sampled cases</h2>
-      <p class="hint">No CNR handy? Click a case below.</p>
-      <div id="case-list" class="case-list">
-        <p class="loading">Loading cases…</p>
-      </div>
-    </section>
-  </main>
+  <main id="view-root"></main>
 
   <script src="/vendor/axios.min.js"></script>
   <script src="/js/api.js"></script>
