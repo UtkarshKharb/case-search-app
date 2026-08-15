@@ -658,6 +658,66 @@ button:active {
   overflow-y: auto;
 }
 
+.hearings-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text);
+  cursor: pointer;
+  list-style: none;
+  transition: color 0.15s ease;
+}
+
+.hearings-toggle::-webkit-details-marker {
+  display: none;
+}
+
+.hearings-toggle:hover {
+  color: var(--color-accent);
+}
+
+.hearings-toggle::after {
+  content: '\25BE';
+  font-size: 0.8rem;
+  transition: transform 0.15s ease;
+}
+
+.hearings-section[open] > .hearings-toggle::after {
+  transform: rotate(180deg);
+}
+
+.summary-label {
+  font-weight: 700;
+  font-size: 0.75rem;
+  letter-spacing: 0.03em;
+  color: var(--color-muted);
+}
+
+.order-text-toggle {
+  display: inline-block;
+  margin-top: 0.4rem;
+  padding: 0.4rem 0.9rem;
+  border-radius: var(--radius);
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+  transition: background-color 0.15s ease;
+}
+
+.order-text-toggle::-webkit-details-marker {
+  display: none;
+}
+
+.order-text-toggle:hover {
+  background: var(--color-accent-strong);
+}
+
 @media (max-width: 600px) {
   .parties-grid {
     grid-template-columns: 1fr;

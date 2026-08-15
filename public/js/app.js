@@ -125,7 +125,9 @@ function renderAdvocateList(advocateRows) {
 
 function renderHearings(hearings) {
   if (hearings.length === 0) return '<p class="empty">No hearings on record for this case.</p>';
-  return `<ol class="timeline">${hearings
+  // Most recent hearing first — display order only, the API's own ascending sort is untouched.
+  const latestFirst = [...hearings].reverse();
+  return `<ol class="timeline">${latestFirst
     .map((h, i) => {
       const judges = splitList(h.judges);
       const delay = Math.min(i * 50, 500);
@@ -144,8 +146,8 @@ function renderHearings(hearings) {
               ${h.is_disposal_order ? '<span class="badge badge-disposed">Disposal order</span>' : ''}
             </div>
             ${judges.length ? `<p class="muted">Bench: ${judges.map(escapeHtml).join(', ')}</p>` : ''}
-            ${h.summary ? `<p>${escapeHtml(h.summary)}</p>` : ''}
-            ${h.order_text ? `<details><summary>Full order text</summary><pre>${escapeHtml(h.order_text)}</pre></details>` : ''}
+            ${h.summary ? `<p><span class="summary-label">SUMMARY:</span> <em>${escapeHtml(h.summary)}</em></p>` : ''}
+            ${h.order_text ? `<details><summary class="order-text-toggle">Full order text</summary><pre>${escapeHtml(h.order_text)}</pre></details>` : ''}
           </div>
         </li>`;
     })
@@ -205,10 +207,14 @@ function buildCaseDetailHtml({ matter, advocates, hearings }) {
       </div>
     </div>
 
-    <div class="hearings-section">
-      <h3>Hearings (${hearings.length})</h3>
-      ${renderHearings(hearings)}
-    </div>
+    ${
+      hearings.length === 0
+        ? `<div class="hearings-section"><h3>Hearings (0)</h3>${renderHearings(hearings)}</div>`
+        : `<details class="hearings-section">
+             <summary class="hearings-toggle">Hearings (${hearings.length})</summary>
+             ${renderHearings(hearings)}
+           </details>`
+    }
   `;
 }
 
