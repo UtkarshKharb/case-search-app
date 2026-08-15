@@ -208,7 +208,7 @@ a {
 .cnr-input-wrap {
   position: relative;
   flex: 1;
-  max-width: 360px;
+  max-width: 480px;
 }
 
 #cnr-input {
@@ -264,7 +264,7 @@ button:active {
 
 .error-message {
   margin: 0.75rem auto 0;
-  max-width: 360px;
+  max-width: 480px;
   padding: 0.6rem 0.85rem;
   background: var(--color-error-bg);
   color: var(--color-error);
@@ -730,7 +730,7 @@ button:active {
     flex-direction: column;
   }
   .cnr-input-wrap {
-    max-width: none;
+    max-width: 600px;
   }
 }
 
