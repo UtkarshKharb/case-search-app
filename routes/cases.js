@@ -49,4 +49,21 @@ router.get('/cases/:cnr', async (req, res, next) => {
   }
 });
 
+// GET /api/dashboard — everything the analytics dashboard needs in one shot. The
+// dataset is small (a few hundred documents total), so filtering/aggregation is done
+// client-side rather than adding a new query per filter combination.
+router.get('/dashboard', async (req, res, next) => {
+  try {
+    const [matters, hearings, advocates] = await Promise.all([
+      Matter.find({}, 'case_id cnr court case_status').lean(),
+      Hearing.find({}, 'case_id date judges hearing_type is_disposal_order').lean(),
+      Advocate.find({}, 'case_id side advocate_name').lean(),
+    ]);
+
+    res.json({ matters, hearings, advocates });
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;

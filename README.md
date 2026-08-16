@@ -88,3 +88,11 @@ of that case's hearings — most recent first, each one showing its date, type (
 order), the bench, a plain-English summary, and (when available) the full order text behind
 its own toggle. Hearings that ended the case are marked with a distinct "disposal order"
 marker on the timeline.
+
+### Analytics dashboard
+
+The **Dashboard** page, built with [Chart.js](https://www.chartjs.org/), shows a bar chart of
+hearing counts per matter, filterable by advocate, judge, or deciding court (filters combine
+with AND). Summary stat cards alongside it show cases shown, total hearings, and average
+hearings per case for the current filter selection — all computed client-side against the full
+sampled dataset, no extra queries per filter.
