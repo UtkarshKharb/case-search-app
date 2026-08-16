@@ -88,21 +88,3 @@ of that case's hearings — most recent first, each one showing its date, type (
 order), the bench, a plain-English summary, and (when available) the full order text behind
 its own toggle. Hearings that ended the case are marked with a distinct "disposal order"
 marker on the timeline.
-
-This is the assignment brief's own suggested example ("a hearing timeline") and the single
-most substantial piece of functionality in the app beyond raw search-and-display, so it's the
-project's hero feature. A few choices behind it worth calling out:
-
-- **Collapsed by default.** Sampled cases have anywhere from 0 to 31 hearings; showing all of
-  them unconditionally would make every case page long by default. The whole section is a
-  native `<details>`/`<summary>` disclosure, so it costs nothing extra to build and comes with
-  keyboard accessibility for free.
-- **Latest-first.** The API returns hearings in ascending date order (their natural order),
-  but the frontend reverses them for display — a user checking a case almost always cares
-  about "what happened most recently," not the filing-era history first.
-- **Sequential, not time-scaled, layout.** Gaps between hearings in the real data range from
-  days to years. A timeline literally scaled to elapsed time would produce absurd layouts for
-  cases mixing tight and wide gaps, so hearings are spaced evenly and rely on their date labels
-  instead.
-
-*(More hero features may be added here later.)*
