@@ -6,6 +6,7 @@ const THEME_KEY = 'causa-analytica-theme';
 const viewRoot = document.getElementById('view-root');
 const navWordmark = document.getElementById('nav-wordmark');
 const navCasesLink = document.getElementById('nav-cases-link');
+const navDashboardLink = document.getElementById('nav-dashboard-link');
 const themeToggle = document.getElementById('theme-toggle');
 
 document.title = APP_NAME;
@@ -340,6 +341,161 @@ async function loadDetail(cnr) {
   }
 }
 
+function dashboardSkeletonHtml() {
+  return `
+    <section class="dashboard">
+      <h1>Analytics dashboard</h1>
+      <p class="subtitle">Hearings per matter — filter by advocate, judge, or court.</p>
+
+      <div class="filter-row">
+        <label class="filter-label">Advocate
+          <select id="filter-advocate" class="filter-select" disabled><option value="">Loading…</option></select>
+        </label>
+        <label class="filter-label">Judge
+          <select id="filter-judge" class="filter-select" disabled><option value="">Loading…</option></select>
+        </label>
+        <label class="filter-label">Court
+          <select id="filter-court" class="filter-select" disabled><option value="">Loading…</option></select>
+        </label>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card"><span class="stat-value" id="stat-cases">—</span><span class="stat-label">Cases shown</span></div>
+        <div class="stat-card"><span class="stat-value" id="stat-hearings">—</span><span class="stat-label">Total hearings</span></div>
+        <div class="stat-card"><span class="stat-value" id="stat-avg">—</span><span class="stat-label">Avg hearings / case</span></div>
+      </div>
+
+      <div class="chart-container">
+        <canvas id="dashboard-chart"></canvas>
+      </div>
+    </section>
+  `;
+}
+
+// Fills a <select> with an "All" option plus one option per value. Built via DOM
+// properties (not innerHTML string interpolation) so values with special characters
+// (quotes, angle brackets) can never break out of the markup — .value/.textContent
+// assignment isn't HTML parsing, so there's nothing to escape.
+function populateSelect(select, values) {
+  select.innerHTML = '';
+  const allOption = document.createElement('option');
+  allOption.value = '';
+  allOption.textContent = 'All';
+  select.appendChild(allOption);
+  values.forEach((value) => {
+    const option = document.createElement('option');
+    option.value = value;
+    option.textContent = value;
+    select.appendChild(option);
+  });
+  select.disabled = false;
+}
+
+let dashboardChart = null;
+
+async function loadDashboard() {
+  const section = document.querySelector('.dashboard');
+  let matters, hearings, advocates;
+  try {
+    ({ matters, hearings, advocates } = await api.getDashboardData());
+  } catch (err) {
+    section.innerHTML = '<p class="error-message">Could not load dashboard data.</p>';
+    return;
+  }
+
+  const hearingsByCase = new Map();
+  hearings.forEach((h) => {
+    if (!hearingsByCase.has(h.case_id)) hearingsByCase.set(h.case_id, []);
+    hearingsByCase.get(h.case_id).push(h);
+  });
+
+  const advocatesByCase = new Map();
+  advocates.forEach((a) => {
+    if (!advocatesByCase.has(a.case_id)) advocatesByCase.set(a.case_id, []);
+    advocatesByCase.get(a.case_id).push(a);
+  });
+
+  const advocateNames = [...new Set(advocates.map((a) => a.advocate_name))].sort();
+  const judgeNames = [...new Set(hearings.flatMap((h) => splitList(h.judges)))].sort();
+  const courtNames = [...new Set(matters.map((m) => m.court))].sort();
+
+  const advocateSelect = document.getElementById('filter-advocate');
+  const judgeSelect = document.getElementById('filter-judge');
+  const courtSelect = document.getElementById('filter-court');
+  populateSelect(advocateSelect, advocateNames);
+  populateSelect(judgeSelect, judgeNames);
+  populateSelect(courtSelect, courtNames);
+
+  function computeFilteredMatters() {
+    const advocateFilter = advocateSelect.value;
+    const judgeFilter = judgeSelect.value;
+    const courtFilter = courtSelect.value;
+
+    // A matter must satisfy every active filter (AND across dimensions) — an empty
+    // filter value ("All") always passes.
+    return matters.filter((m) => {
+      if (courtFilter && m.court !== courtFilter) return false;
+      if (advocateFilter) {
+        const caseAdvocates = advocatesByCase.get(m.case_id) || [];
+        if (!caseAdvocates.some((a) => a.advocate_name === advocateFilter)) return false;
+      }
+      if (judgeFilter) {
+        const caseHearings = hearingsByCase.get(m.case_id) || [];
+        if (!caseHearings.some((h) => splitList(h.judges).includes(judgeFilter))) return false;
+      }
+      return true;
+    });
+  }
+
+  function render() {
+    const filteredMatters = computeFilteredMatters();
+    const counts = filteredMatters
+      .map((m) => ({ cnr: m.cnr, count: (hearingsByCase.get(m.case_id) || []).length }))
+      .sort((a, b) => b.count - a.count);
+    const totalHearings = counts.reduce((sum, c) => sum + c.count, 0);
+    const avg = counts.length ? (totalHearings / counts.length).toFixed(1) : '0';
+
+    document.getElementById('stat-cases').textContent = filteredMatters.length;
+    document.getElementById('stat-hearings').textContent = totalHearings;
+    document.getElementById('stat-avg').textContent = avg;
+
+    renderChart(counts);
+  }
+
+  function renderChart(counts) {
+    const canvas = document.getElementById('dashboard-chart');
+    if (!canvas) return; // route may have changed while data was loading
+    const style = getComputedStyle(document.documentElement);
+    const accent = style.getPropertyValue('--color-accent').trim();
+    const textColor = style.getPropertyValue('--color-muted').trim();
+    const gridColor = style.getPropertyValue('--color-border').trim();
+
+    if (dashboardChart) dashboardChart.destroy();
+    dashboardChart = new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels: counts.map((c) => c.cnr),
+        datasets: [{ label: 'Hearings', data: counts.map((c) => c.count), backgroundColor: accent }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: textColor, autoSkip: true, maxRotation: 90, minRotation: 0 }, grid: { color: gridColor } },
+          y: { ticks: { color: textColor, precision: 0 }, grid: { color: gridColor }, beginAtZero: true },
+        },
+      },
+    });
+  }
+
+  [advocateSelect, judgeSelect, courtSelect].forEach((select) => {
+    select.addEventListener('change', render);
+  });
+
+  render();
+}
+
 function notFoundHtml() {
   return `
     <section class="hero">
@@ -357,6 +513,7 @@ function parseRoute(hash) {
   let m = h.match(/^#\/case\/([A-Za-z0-9]{16})$/);
   if (m) return { view: 'detail', cnr: m[1].toUpperCase() };
   if (/^#\/cases\/?$/.test(h)) return { view: 'browse' };
+  if (/^#\/dashboard\/?$/.test(h)) return { view: 'dashboard' };
   if (/^#\/?$/.test(h)) return { view: 'home' };
   return { view: 'notfound' };
 }
@@ -364,6 +521,7 @@ function parseRoute(hash) {
 function updateNavActiveState(view) {
   navWordmark.classList.toggle('active', view === 'home');
   navCasesLink.classList.toggle('active', view === 'browse');
+  navDashboardLink.classList.toggle('active', view === 'dashboard');
 }
 
 let isInitialRoute = true;
@@ -375,6 +533,7 @@ async function router() {
     if (route.view === 'home') viewRoot.innerHTML = homeSkeletonHtml();
     else if (route.view === 'browse') viewRoot.innerHTML = browseSkeletonHtml();
     else if (route.view === 'detail') viewRoot.innerHTML = detailSkeletonHtml();
+    else if (route.view === 'dashboard') viewRoot.innerHTML = dashboardSkeletonHtml();
     else viewRoot.innerHTML = notFoundHtml();
   };
 
@@ -392,6 +551,7 @@ async function router() {
   if (route.view === 'home') await loadHome();
   else if (route.view === 'browse') await loadBrowse();
   else if (route.view === 'detail') await loadDetail(route.cnr);
+  else if (route.view === 'dashboard') await loadDashboard();
 }
 
 // --- event delegation (view-root content is replaced on every route change,

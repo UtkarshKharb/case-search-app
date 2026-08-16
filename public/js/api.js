@@ -9,4 +9,9 @@ const api = {
     const { data } = await axios.get(`/api/cases/${encodeURIComponent(cnr)}`);
     return data;
   },
+
+  async getDashboardData() {
+    const { data } = await axios.get('/api/dashboard');
+    return data;
+  },
 };
