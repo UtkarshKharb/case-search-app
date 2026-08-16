@@ -284,7 +284,7 @@ function homeSkeletonHtml() {
     </section>
     <section class="featured">
       <h2>Featured cases</h2>
-      <p class="hint">A preview of the sampled dataset — see the full list under "All Cases".</p>
+      <p class="hint">See the full list of cases under "All Cases".</p>
       <div id="case-list" class="case-grid">${skeletonCards(HOME_PREVIEW_COUNT)}</div>
     </section>
   `;
