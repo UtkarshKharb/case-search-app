@@ -96,3 +96,17 @@ hearing counts per matter, filterable by advocate, judge, or deciding court (fil
 with AND). Summary stat cards alongside it show cases shown, total hearings, and average
 hearings per case for the current filter selection — all computed client-side against the full
 sampled dataset, no extra queries per filter.
+
+## Note on backend language
+
+The assignment noted Python as the preferred backend language; this project uses Node/Express
+instead. Porting to Python would be a translation, not a redesign — the frontend only talks to
+the API over HTTP/JSON, so as long as a Python backend serves the same routes and response
+shapes, nothing in `public/` needs to change, and MongoDB itself is untouched either way. The
+minimal changes required:
+
+- `app.js`, `server.js`, `routes/cases.js`, `config/db.js` → a Python framework (FastAPI is the
+  natural fit) plus a MongoDB driver (PyMongo, or Motor for async).
+- `models/*.js` → Python equivalents (Pydantic models pair naturally with FastAPI).
+- `scripts/ingest.js` → a Python rewrite using `openpyxl` instead of `exceljs`.
+- `package.json` → `requirements.txt`/`pyproject.toml` and a virtual env.
